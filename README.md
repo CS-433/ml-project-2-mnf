@@ -2,7 +2,7 @@
 
 For this project, we were given a set of satellite images acquired 
 from GoogleMaps and ground-truth images where each pixel is labeled 
-as road (1) or background (2). 
+as road (1) or background (0). 
 
 Our task is to train a classifier to segment roads in these images, i.e. 
 assigns a label `road=1, background=0` to each pixel.
