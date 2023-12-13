@@ -50,9 +50,7 @@ def train_epoch(model, optimizer, scheduler, criterion, train_loader, epoch, dev
                 f"batch_f1={f1_float:0.3f} "
                 f"lr={scheduler.get_last_lr()[0]:0.3e} "
             )
-
-
-
+            
     return loss_history, accuracy_history, lr_history , f1_score_history
 
 
