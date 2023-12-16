@@ -5,11 +5,12 @@ Our task is to train a classifier to segment roads in these images, i.e. assigns
 
 ## Repo setup:
 
-1. The dataset is available from the 
-[AICrowd page](https://www.aicrowd.com/challenges/epfl-ml-road-segmentation).
+1. The dataset is available from the [AICrowd page](https://www.aicrowd.com/challenges/epfl-ml-road-segmentation).
 
-2. The first method we tried to implement is a classic UNet, then we tried to implement the MARESUNET from the paper [Multi-stage Attention ResU-Net for Semantic Segmentation of Fine-Resolution Remote Sensing Images](https://github.com/lironui/MAResU-Net) with modifications to suit our problem, and finally the ResNet34 from [Pytorch](https://pytorch.org/vision/main/models/generated/torchvision.models.resnet34.html). All the different models are available in script/models.py
+2. The repo is organised in three folders (data : contains the dataset training (images + GT) and test of the project, src : the source code given with the subject, script : the code to train our models and plot the results.
 
-3. In order to evaluate our solutions we used our own implementation available in script/metrics.py
+3. The first method we tried to implement is a classic UNet, then we tried to implement the MARESUNET from the paper [Multi-stage Attention ResU-Net for Semantic Segmentation of Fine-Resolution Remote Sensing Images](https://github.com/lironui/MAResU-Net) with modifications to suit our problem, and finally the ResNet34 from [Pytorch](https://pytorch.org/vision/main/models/generated/torchvision.models.resnet34.html). All the different models are available in script/models.py
 
-4. Finally, the file run.py lets a chosen model (between the 3 introduced above) train and plot some results. Use model_1 as model_factory for UNet, model_2 for MAResUNet and model_3 for ResNet. Using 300 epochs will give the best performances for the MAResUNet, and the best performances we had for this project. 
+4. In order to evaluate our solutions we used our own implementation of accuracy and F1 score available in script/metrics.py. Moreover, we plotted results for 100 epochs for the three models in the notebook script/plot_metrics.ipynb
+
+5. Finally, the file run.py lets a chosen model (between the 3 introduced above) train and plot some results. Use model_1 as model_factory for UNet, model_2 for MAResUNet and model_3 for ResNet. Using 300 epochs will give the best performances for the MAResUNet, and the best performances we had for this project. 
