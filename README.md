@@ -1,24 +1,15 @@
 # Project Road Segmentation
 
-For this project, we were given a set of satellite images acquired 
-from GoogleMaps and ground-truth images where each pixel is labeled 
-as road (1) or background (0). 
+For this project, we were given a set of satellite images acquired from GoogleMaps and ground-truth images where each pixel is labeled as road (1) or background (0). 
+Our task is to train a classifier to segment roads in these images, i.e. assigns a label `road=1, background=0` to each pixel.
 
-Our task is to train a classifier to segment roads in these images, i.e. 
-assigns a label `road=1, background=0` to each pixel.
-
-## Submission system environment setup:
+## Repo setup:
 
 1. The dataset is available from the 
 [AICrowd page](https://www.aicrowd.com/challenges/epfl-ml-road-segmentation).
 
-2. Given the python notebook `segment_aerial_images.ipynb`, an example code on how to extract the images as well as 
-corresponding labels of each pixel, we must develop new solutions. The notebook shows how to use `scikit learn` to generate features from each pixel, and finally train a linear classifier to predict whether each pixel is road or background. The example code here also provides helper functions to visualize the images, labels and predictions. In particular, the two functions `mask_to_submission.py` and `submission_to_mask.py` helped us to convert from the submission format to a visualization, and vice versa.
+2. The first method we tried to implement is a classic UNet, then we tried to implement the MARESUNET from the paper [Multi-stage Attention ResU-Net for Semantic Segmentation of Fine-Resolution Remote Sensing Images](https://github.com/lironui/MAResU-Net) with modifications to suit our problem, and finally the ResNet34 from [Pytorch](https://pytorch.org/vision/main/models/generated/torchvision.models.resnet34.html). All the different models are available in script/models.py
 
-3. As a more advanced approach, we were given the file `tf_aerial_images.py`, which demonstrates the use of a basic convolutional neural network in TensorFlow for the same prediction task.
+3. In order to evaluate our solutions we used our own implementation available in script/metrics.py
 
-4. The first method we tried to implement is a CNN, of the architecture of AlexNet. (Pre-trained or not TBD) Then UNet, kNN, SVM, ...
-
-5. In order to evaluate our solutions 
-Evaluation Metric:
- [F1 score](https://en.wikipedia.org/wiki/F1_score)
+4. Finally, the file run.py lets a chosen model (between the 3 introduced above) train and plot some results. Use model_1 as model_factory for UNet, model_2 for MAResUNet and model_3 for ResNet. Using 300 epochs will give the best performances for the MAResUNet, and the best performances we had for this project. 
