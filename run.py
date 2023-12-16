@@ -25,7 +25,7 @@ import cv2
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
-from models import MAResUNet, UNet
+from models import MAResUNet, UNet, PretrainedResNet
 from dataset import RoadSegmentationDataset, standardize
 from metrics import compute_metrics, compute_f1_score
 from training_functions import train_epoch, validate, get_predictions
@@ -46,12 +46,6 @@ label = Image.open(label_pt)
 
 image_array = np.array(image)
 label_array = np.array(label)
-
-#### Crashes on regular notebooks ####
-
-# fig, ax= plt.subplots(1,2)
-# ax[0].imshow(image_array)
-# ax[1].imshow(label_array)
 
 #### Data augmentation using albumentations library ####
 
@@ -74,7 +68,7 @@ def get_dataloaders(batch_size, show_examples=False):
     dataset_augmented = RoadSegmentationDataset(data_dir=data_path, transform=trans, transform_x=transform_x)
     dataset_non_augmented = RoadSegmentationDataset(data_dir=data_path, transform=trans_non_augmented, transform_x=transform_x)
     dataset = ConcatDataset([dataset_augmented, dataset_non_augmented])
-    #dataset = dataset_non_augmented
+
     val_percent=0.15
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
@@ -85,7 +79,7 @@ def get_dataloaders(batch_size, show_examples=False):
     train_loader = torch.utils.data.DataLoader(
         train_set,
         batch_size=batch_size,
-        shuffle=True,  # Shuffle the iteration order over the dataset
+        shuffle=True,
         pin_memory=torch.cuda.is_available(),
         drop_last=False,
         num_workers=2,
@@ -99,17 +93,13 @@ def get_dataloaders(batch_size, show_examples=False):
 
     if show_examples:
       for batch in train_loader:
-          images = batch[0]  # Assuming your batch has a key 'image'
-          masks = batch[1]    # Assuming your batch has a key 'mask'
+          images = batch[0]
+          masks = batch[1]
 
-          # Assuming images and masks are 4D tensors (batch_size, channels, height, width)
           image = images[0]
           mask = masks[0]
-          #print(images.shape)
-          #print(image.shape)
-          # Convert tensors to NumPy arrays
           image_np = image.numpy()
-          mask_np = mask.squeeze().numpy()  # Assuming mask is single-channel
+          mask_np = mask.squeeze().numpy()
 
           # Plot the image
           plt.figure(figsize=(8, 4))
@@ -121,7 +111,7 @@ def get_dataloaders(batch_size, show_examples=False):
 
           # Plot the mask
           plt.subplot(1, 2, 2)
-          plt.imshow(mask_np, cmap='gray')  # Adjust cmap based on your mask
+          plt.imshow(mask_np, cmap='gray')
           plt.title('Mask')
           plt.axis('off')
 
@@ -141,18 +131,6 @@ temp = get_dataloaders(
 del temp
 
 def compute_metrics(target, predicted_probs, threshold=0.5):
-    """
-    Compute accuracy and F1 score for binary segmentation.
-
-    Parameters:
-        target (torch.Tensor): Ground truth binary mask tensor of size [1, 1, H, W].
-        predicted_probs (torch.Tensor): Predicted probability map tensor of size [1, 1, H, W].
-        threshold (float): Threshold for binarizing the predicted probability map.
-
-    Returns:
-        accuracy (float): Accuracy score.
-        f1 (float): F1 score.
-    """
     # Binarize the predicted probabilities
     predicted_binary = (predicted_probs > threshold).float()
 
@@ -165,17 +143,6 @@ def compute_metrics(target, predicted_probs, threshold=0.5):
     return np.round(accuracy,3)
 
 def compute_f1_score(target_masks, predicted_masks, threshold=0.5):
-    """
-    Compute F1 score for a batch of target and predicted masks.
-
-    Args:
-    - target_masks (torch.Tensor): Batch of target masks (ground truth).
-    - predicted_masks (torch.Tensor): Batch of predicted masks.
-    - threshold (float): Threshold for binarizing the predicted masks.
-
-    Returns:
-    - f1_score (float): Computed F1 score.
-    """
     predicted_masks = (predicted_masks > threshold).float()
 
     target_flat = target_masks.view(-1)
@@ -255,7 +222,7 @@ def validate(model, device, val_loader, criterion):
     )
     return test_loss, correct , f1
 
-#### training function ####
+#### Training function ####
 
 def run_training(model_factory, num_epochs, data_kwargs, optimizer_kwargs, device="cuda"):
     
@@ -292,7 +259,6 @@ def run_training(model_factory, num_epochs, data_kwargs, optimizer_kwargs, devic
         val_acc_history.append(val_acc)
         val_f1_history.append(f1_val)
 
-    # Plot training curves
     n_train = len(train_loss_history)
     t_train = num_epochs * np.arange(n_train) / n_train
     t_val = np.arange(1, num_epochs + 1)
@@ -317,7 +283,6 @@ def run_training(model_factory, num_epochs, data_kwargs, optimizer_kwargs, devic
     plt.xlabel("Epoch")
     plt.ylabel("Learning Rate")
 
-    # Plot low/high loss predictions on validation set
     points = get_predictions(
         model,
         device,
@@ -330,20 +295,17 @@ def run_training(model_factory, num_epochs, data_kwargs, optimizer_kwargs, devic
         print(np.squeeze(data, axis=0).shape)
         print(pred.shape)
         print(target.shape)
-
+        
         mask_pred=(pred>0.5)
 
-        # Plotting the input image
         plt.subplot(1, 3, 1)
         plt.imshow(np.transpose(np.squeeze(data, axis=0), (1,2,0)), cmap='gray')
         plt.title('Input Image')
 
-        # Plotting the predicted labels
         plt.subplot(1, 3, 2)
         plt.imshow(np.transpose(np.squeeze(mask_pred, axis=0), (1,2,0)), cmap='viridis', vmin=0, vmax=1)  # Assuming binary classification
         plt.title('Predicted Label')
 
-        # Plotting the ground truth labels
         plt.subplot(1, 3, 3)
         plt.imshow(np.transpose(np.squeeze(target, axis=0), (1,2,0)), cmap='viridis', vmin=0, vmax=1)  # Assuming binary classification
         plt.title('Ground Truth Label')
@@ -360,18 +322,18 @@ optimizer_kwargs = dict(
     weight_decay=1e-3,
 )
 
-num_epochs = 20 # best 200
+num_epochs = 300 # best 300 for MARESUNET
 n_channels = 3
 n_classes = 1
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # model_1 = UNet(n_channels,n_classes).to(device)
-model_2 = MAResUNet(n_channels,n_classes).to("cpu")
+# model_2 = MAResUNet(n_channels,n_classes).to(device)
 # model_3 = PretrainedUNet(n_channels, n_classes,pretrained_backbone=True).to(device)
 
 # model_factory = model_1 # -----> UNet
-model_factory = model_2 # -----> MAResUNet
+# model_factory = model_2 # -----> MAResUNet
 # model_factory = model_3 # -----> UNet Pretrained
 
 data_kwargs = dict(
@@ -383,4 +345,4 @@ run_training(
     num_epochs = num_epochs,
     optimizer_kwargs = optimizer_kwargs,
     data_kwargs = data_kwargs,
-    device = "cpu")
+    device = device)
